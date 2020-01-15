@@ -1,0 +1,54 @@
+﻿#--------------------------------------------------------------------------
+# ■ WindMesser 個別スキルコマンドスクリプト ver1.00
+#--------------------------------------------------------------------------
+#   作成者：塵風
+#      URL：http://windmesser.cc/
+#     MAIL：chill@windmesser.cc
+#--------------------------------------------------------------------------
+#     概要：アクターのクラスごとに戦闘時のスキルコマンド名を変更します
+#           
+#     仕様：Window_Commandクラスにてcommandsをアクセサ設定
+#           Scene_Battleクラスにてaliasでコマンドウィンドウ更新処理追加
+#
+# 使用条件：特になし
+# 使用方法：スクリプトエディタの「Main」より上に挿入してください
+#--------------------------------------------------------------------------
+
+#--------------------------------------------------------------------------
+# 外部からコマンドを変更可能にする
+#--------------------------------------------------------------------------
+class Window_Command < Window_Selectable
+  
+  attr_accessor :commands
+  
+end
+
+#--------------------------------------------------------------------------
+# アクター行動直前にスキルコマンド名を変更、コマンドウィンドウを更新
+#--------------------------------------------------------------------------
+class Scene_Battle
+  
+  if !method_defined?(:phase3_setup_command_window_o)
+    alias phase3_setup_command_window_o phase3_setup_command_window
+  end
+  
+  def phase3_setup_command_window
+    
+    # ▼要改造
+    # クラスIDごとにスキルコマンド名を変える
+    case @active_battler.class_id
+    when 1,2,3,4,5,6
+      words_skill = "必殺技"
+    when 7,8
+      words_skill = "魔法"
+    else
+      words_skill = $data_system.words.skill
+    end
+
+    # スキルコマンド名変更、更新
+    @actor_command_window.commands[1] = words_skill
+    @actor_command_window.refresh
+    
+    phase3_setup_command_window_o
+  end
+end

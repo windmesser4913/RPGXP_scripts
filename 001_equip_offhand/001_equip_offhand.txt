@@ -1,0 +1,67 @@
+﻿#==============================================================================
+# ■ 「素手」装備スクリプト ver1.01
+#--------------------------------------------------------------------------
+#   作成者：塵風
+#      URL：http://windmesser.cc/
+#     MAIL：chill@windmesser.cc
+#------------------------------------------------------------------------------
+#   Game_Actor 以下に貼り付けて使用してください。
+#   （Scene_Debug 以下、Main 以上が無難です。）
+#
+#   何も装備していない場合に指定された武器を装備しているように認識させます。
+#   @noweapon_id で武器IDを指定することで、
+#   そのIDの武器を「素手」装備と認識させます。初期値は１です。
+#--------------------------------------------------------------------------
+#  ver1.01：クラスの再定義関連でゲームが停止する不具合を修正しました。
+#==============================================================================
+
+class Game_Actor < Game_Battler
+  if !method_defined?(:original_initialize)
+    alias original_initialize initialize
+    alias original_setup setup
+    alias original_equip equip
+  end
+
+  #--------------------------------------------------------------------------
+  # ● オブジェクト初期化
+  #     actor_id : アクター ID
+  #--------------------------------------------------------------------------
+  def initialize(actor_id)
+    original_initialize(actor_id)
+    @noweapon_id = 1  # 「素手」の武器ID
+  end
+
+  #--------------------------------------------------------------------------
+  # ● セットアップ
+  #     actor_id : アクター ID
+  #--------------------------------------------------------------------------
+  def setup(actor_id)
+    original_setup(actor_id)
+    actor = $data_actors[actor_id]
+    if((@weapon_id = actor.weapon_id) == 0)
+      @weapon_id = @noweapon_id
+    end
+  end
+
+  #--------------------------------------------------------------------------
+  # ● 装備の変更
+  #     equip_type : 装備タイプ
+  #     id    : 武器 or 防具 ID  (0 なら装備解除)
+  #--------------------------------------------------------------------------
+  def equip(equip_type, id)
+    case equip_type
+    when 0  # 武器
+      if id == 0 or $game_party.weapon_number(id) > 0
+        if(id == 0)
+          id = @noweapon_id
+        end
+        $game_party.gain_weapon(@weapon_id, 1)
+        @weapon_id = id
+        $game_party.lose_weapon(id, 1)
+        $game_party.lose_weapon(@noweapon_id, 1)
+      end
+    when 1..4  # 武器以外
+      original_equip
+    end
+  end
+end
